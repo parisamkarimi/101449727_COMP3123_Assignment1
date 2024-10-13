@@ -1,0 +1,9 @@
+{
+    "first_name": "Alice",
+    "last_name": "Johnson",
+    "email": "alice.johnson@example.com",
+    "position": "Designer",
+    "salary": 85000,
+    "date_of_joining": "2023-08-10T00:00:00.000Z",
+    "department": "Design"
+}
