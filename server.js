@@ -6,11 +6,18 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000; // Change this to your desired port
 
+// Middleware
 app.use(bodyParser.json());
 
-mongoose.connect(process.env.MONGODB_URI, {
+// MongoDB connection setup
+const mongoUser = 'paisamohammadkarimi'; 
+const mongoPassword = '0440818044'; 
+const mongoDB = 'comp3123_assigment1'; 
+const mongoURI = `mongodb+srv://${mongoUser}:${mongoPassword}@cluster0.mongodb.net/${mongoDB}?retryWrites=true&w=majority`;
+
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
@@ -19,6 +26,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.error('MongoDB connection error:', err);
 });
 
+// User schema and model
 const userSchema = new mongoose.Schema({
   username: String,
   email: String,
@@ -29,6 +37,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Employee schema and model
 const employeeSchema = new mongoose.Schema({
   first_name: String,
   last_name: String,
@@ -43,6 +52,7 @@ const employeeSchema = new mongoose.Schema({
 
 const Employee = mongoose.model('Employee', employeeSchema);
 
+// User registration route
 app.post('/api/v1/user/signup', [
   check('username').notEmpty().withMessage('Username is required'),
   check('email').isEmail().withMessage('Valid email is required'),
@@ -54,7 +64,10 @@ app.post('/api/v1/user/signup', [
   }
 
   const { username, email, password } = req.body;
+
+  // Hash the password before saving
   const hashedPassword = await bcrypt.hash(password, 10);
+
   const newUser = new User({ username, email, password: hashedPassword });
   
   try {
@@ -65,17 +78,20 @@ app.post('/api/v1/user/signup', [
   }
 });
 
+// User login route
 app.post('/api/v1/user/login', async (req, res) => {
   const { email, password } = req.body;
+
   const user = await User.findOne({ email });
   if (user && await bcrypt.compare(password, user.password)) {
-    const token = jwt.sign({ id: user._id }, 'jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, 'your_jwt_secret', { expiresIn: '1h' }); // Replace 'your_jwt_secret' with a secure secret
     res.status(200).json({ message: 'Login successful.', jwt_token: token });
   } else {
     res.status(401).json({ status: false, message: 'Invalid Username and password' });
   }
 });
 
+// Get all employees
 app.get('/api/v1/emp/employees', async (req, res) => {
   try {
     const employees = await Employee.find();
@@ -85,8 +101,10 @@ app.get('/api/v1/emp/employees', async (req, res) => {
   }
 });
 
+// Create a new employee
 app.post('/api/v1/emp/employees', async (req, res) => {
   const { first_name, last_name, email, position, salary, date_of_joining, department } = req.body;
+
   const newEmployee = new Employee({ first_name, last_name, email, position, salary, date_of_joining, department });
   
   try {
@@ -97,8 +115,10 @@ app.post('/api/v1/emp/employees', async (req, res) => {
   }
 });
 
+// Get employee details by ID
 app.get('/api/v1/emp/employees/:eid', async (req, res) => {
   const { eid } = req.params;
+
   try {
     const employee = await Employee.findById(eid);
     if (employee) {
@@ -111,9 +131,11 @@ app.get('/api/v1/emp/employees/:eid', async (req, res) => {
   }
 });
 
+// Update employee details
 app.put('/api/v1/emp/employees/:eid', async (req, res) => {
   const { eid } = req.params;
   const updates = req.body;
+
   try {
     const updatedEmployee = await Employee.findByIdAndUpdate(eid, updates, { new: true });
     if (updatedEmployee) {
@@ -126,8 +148,10 @@ app.put('/api/v1/emp/employees/:eid', async (req, res) => {
   }
 });
 
+// Delete employee by ID
 app.delete('/api/v1/emp/employees', async (req, res) => {
   const { eid } = req.query;
+
   try {
     const deletedEmployee = await Employee.findByIdAndDelete(eid);
     if (deletedEmployee) {
@@ -140,6 +164,7 @@ app.delete('/api/v1/emp/employees', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
